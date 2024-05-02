@@ -1,5 +1,12 @@
 #pragma once
 #include "BaseGame.h"
+#include <vector>
+class Player;
+class Hamburger;
+class Salad;
+class Map;
+class Item;
+
 class Game : public BaseGame
 {
 public:
@@ -22,9 +29,29 @@ public:
 	void ProcessMouseUpEvent( const SDL_MouseButtonEvent& e ) override;
 
 private:
+	Player* m_pPlayer;
+	Player* m_pPlayer2;
+	std::vector<Item*> m_pHamburgers;
+	std::vector<Item*> m_pSalads;
+
+	float m_HamburgerSpawnTimer;
+	float m_SaladSpawnTimer;
+
+	//int m_Points;
+	int m_Lives;
+
+	bool m_Playing;
+
+	static const int m_MAX_LIVES;
+
+	const Rectf m_GameArea;
 
 	// FUNCTIONS
 	void Initialize();
 	void Cleanup( );
 	void ClearBackground( ) const;
+
+	void DrawUI() const;
+	void SpawnItems();
+	bool CheckConsumeItems(std::vector<Item*>& items);
 };
