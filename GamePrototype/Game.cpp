@@ -17,6 +17,7 @@ Game::Game( const Window& window )
 	, m_Lives{ m_MAX_LIVES }
 	, m_GameArea{0.f, 0.f, GetViewPort().width, GetViewPort().height - 40.f}
 	, m_Playing{ true }
+	, m_PlayTime{ 0.f }
 {
 	Initialize();
 }
@@ -51,6 +52,7 @@ void Game::Update( float elapsedSec )
 
 	m_HamburgerSpawnTimer -= elapsedSec;
 	m_SaladSpawnTimer -= elapsedSec;
+	m_PlayTime += elapsedSec;
 
 	SpawnItems();
 
@@ -64,7 +66,7 @@ void Game::Update( float elapsedSec )
 
 	if (CheckConsumeItems(m_pHamburgers))
 	{
-		m_Lives -= 2;
+		m_Lives -= 1;
 		if (m_Lives <= 0) m_Playing = false;
 	}
 	if (CheckConsumeItems(m_pSalads)) 
@@ -96,6 +98,7 @@ void Game::Draw( ) const
 
 void Game::ProcessKeyDownEvent( const SDL_KeyboardEvent & e )
 {
+	std::cout << "Difficulty: " << GetDifficulty() << std::endl;
 }
 
 void Game::ProcessKeyUpEvent( const SDL_KeyboardEvent& e )
@@ -109,7 +112,6 @@ void Game::ProcessMouseMotionEvent( const SDL_MouseMotionEvent& e )
 
 void Game::ProcessMouseDownEvent( const SDL_MouseButtonEvent& e )
 {
-
 	if (!m_Playing) return;
 
 	if (e.button == SDL_BUTTON_LEFT)
@@ -127,7 +129,10 @@ void Game::ProcessMouseDownEvent( const SDL_MouseButtonEvent& e )
 			}
 		}
 
-		m_pHamburgers.push_back(new Hamburger{ mousePos});
+		if (!utils::IsPointInCircle(mousePos, m_pPlayer->GetHitbox()))
+		{
+			m_pHamburgers.push_back(new Hamburger{ mousePos });
+		}
 	}
 }
 
@@ -191,6 +196,7 @@ void Game::SpawnItems()
 	}
 
 	const int hamburgerSpawnRadius{ 500 };
+	const float minHamburgerSpawnTime{ ScaleToDifficulty(1.5f, 0.f) };
 	if (m_HamburgerSpawnTimer <= 0.f)
 	{
 		Point2f pos{};
@@ -199,7 +205,7 @@ void Game::SpawnItems()
 		Hamburger* pHamburger{ new Hamburger{pos} };
 		m_pHamburgers.push_back(pHamburger);
 
-		m_HamburgerSpawnTimer = float(rand() % 20) / 10 + 0.5f;
+		m_HamburgerSpawnTimer = float(rand() % 20) / 10 + minHamburgerSpawnTime;
 	}
 }
 
@@ -215,4 +221,18 @@ bool Game::CheckConsumeItems(std::vector<Item*>& items)
 		}
 	}
 	return false;
+}
+
+float Game::GetDifficulty()
+{
+	return 1.f;
+	const double difficultyTime{ 90 }; // seconds before the difficulty reaches 0.5
+	const double base{pow(0.5, 1/difficultyTime)};
+	return 1.f - pow(base, m_PlayTime);
+}
+
+float Game::ScaleToDifficulty(float valEasy, float valHard)
+{
+	const float difficulty{ GetDifficulty() };
+	return valEasy * (1 - difficulty) + valHard * difficulty;
 }
