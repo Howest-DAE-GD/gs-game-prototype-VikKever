@@ -6,15 +6,13 @@
 #include "Item.h"
 #include <iostream>
 
-const int Game::m_MAX_LIVES{ 10 };
-
 Game::Game( const Window& window ) 
 	:BaseGame{ window }
 	, m_pPlayer{ new Player{Point2f{GetViewPort().width / 2, (GetViewPort().height - 40.f) / 2}}}
 	, m_HamburgerSpawnTimer{0.f}
 	, m_SaladSpawnTimer{0.f}
 	//, m_Points{ 0 }
-	, m_Lives{ m_MAX_LIVES }
+	, m_Health{ 1.f }
 	, m_GameArea{0.f, 0.f, GetViewPort().width, GetViewPort().height - 40.f}
 	, m_Playing{ true }
 	, m_PlayTime{ 0.f }
@@ -62,18 +60,19 @@ void Game::Update( float elapsedSec )
 		m_pPlayer->ApplyForce(pHamburger->GetForce(m_pPlayer->GetPosition()));
 	}
 	
-	m_pPlayer->Update(elapsedSec, m_GameArea);
+	m_pPlayer->Update(elapsedSec, m_GameArea, ScaleToDifficulty(100.f, 150.f));
 
 	if (CheckConsumeItems(m_pHamburgers))
 	{
-		m_Lives -= 1;
-		if (m_Lives <= 0) m_Playing = false;
+		m_Health -= 0.1f;
 	}
 	if (CheckConsumeItems(m_pSalads)) 
 	{
-		++m_Lives;
-		if (m_Lives > m_MAX_LIVES) m_Lives = m_MAX_LIVES;
+		m_Health += 0.1f;
+		if (m_Health > 1.f) m_Health = 1.f;
 	}
+
+	DepleteHealth(elapsedSec);
 }
 
 void Game::Draw( ) const
@@ -163,22 +162,22 @@ void Game::DrawUI() const
 {
 	const Rectf UIRect{ 0.f, m_GameArea.height, m_GameArea.width, GetViewPort().height - m_GameArea.height };
 
-	const float margin{ 30.f };
-	const float size{ 15.f };
+	const float margin{ 10.f };
+	const Rectf healthBarRect{
+		UIRect.left + margin, UIRect.bottom + margin,
+		UIRect.width - margin * 2, UIRect.height - margin * 2
+	};
 
 	utils::SetColor(Color4f{ 0.f, 0.f, 0.f, 1.f });
 	utils::FillRect(UIRect);
 
-	const Point2f heartsPos{ margin, UIRect.bottom + UIRect.height / 2 };
+	Rectf healthBarFill{ healthBarRect };
+	healthBarFill.width = healthBarRect.width * m_Health;
+
 	utils::SetColor(Color4f{ 1.f, 0.f, 0.f, 1.f });
-	for (int heartNr{}; heartNr < m_MAX_LIVES; ++heartNr)
-	{
-		const Point2f pos{ heartsPos.x + heartNr * margin, heartsPos.y };
-		if (heartNr >= m_Lives)
-			utils::DrawEllipse(pos.x, pos.y, size / 2, size / 2);
-		else
-			utils::FillEllipse(pos.x, pos.y, size / 2, size / 2);
-	}
+	utils::FillRect(healthBarFill);
+
+	utils::DrawRect(healthBarRect, 1.f);
 }
 
 void Game::SpawnItems()
@@ -192,11 +191,11 @@ void Game::SpawnItems()
 		Salad* pSalad{ new Salad{pos} };
 		m_pSalads.push_back(pSalad);
 
-		m_SaladSpawnTimer = float(rand() % 30) / 10 + 2.f;
+		m_SaladSpawnTimer = float(rand() % 30) / 10 + 0.5f;
 	}
 
 	const int hamburgerSpawnRadius{ 500 };
-	const float minHamburgerSpawnTime{ ScaleToDifficulty(1.5f, 0.f) };
+	const float minHamburgerSpawnTime{ ScaleToDifficulty(2.5f, 0.5f) };
 	if (m_HamburgerSpawnTimer <= 0.f)
 	{
 		Point2f pos{};
@@ -223,10 +222,17 @@ bool Game::CheckConsumeItems(std::vector<Item*>& items)
 	return false;
 }
 
+void Game::DepleteHealth(float elapsedSec)
+{
+	const float healthDepletionRate{ ScaleToDifficulty(0.f, 0.05f)};
+	m_Health -= elapsedSec * healthDepletionRate;
+	if (m_Health <= 0) m_Playing = false;
+}
+
 float Game::GetDifficulty()
 {
-	return 1.f;
-	const double difficultyTime{ 90 }; // seconds before the difficulty reaches 0.5
+	//return 1.f;
+	const double difficultyTime{ 60 }; // seconds before the difficulty reaches 0.5
 	const double base{pow(0.5, 1/difficultyTime)};
 	return 1.f - pow(base, m_PlayTime);
 }

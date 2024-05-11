@@ -7,7 +7,7 @@ public:
 	explicit Player(const Point2f& pos);
 
 	void Draw() const;
-	void Update(float elapsedSec, const Rectf& gameArea);
+	void Update(float elapsedSec, const Rectf& gameArea, float playerSpeed);
 	void ApplyForce(const Vector2f& force);
 	Point2f GetPosition() const;
 	Circlef GetHitbox() const;

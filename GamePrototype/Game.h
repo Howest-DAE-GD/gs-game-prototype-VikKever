@@ -37,11 +37,9 @@ private:
 	float m_HamburgerSpawnTimer;
 	float m_SaladSpawnTimer;
 
-	int m_Lives;
+	float m_Health;
 	float m_PlayTime;
 	bool m_Playing;
-
-	static const int m_MAX_LIVES;
 
 	const Rectf m_GameArea;
 
@@ -53,6 +51,8 @@ private:
 	void DrawUI() const;
 	void SpawnItems();
 	bool CheckConsumeItems(std::vector<Item*>& items);
+
+	void DepleteHealth(float elapsedSec);
 
 	float GetDifficulty();
 	float ScaleToDifficulty(float valEasy, float valHard);

@@ -20,13 +20,11 @@ void Player::Draw() const
 	utils::FillTriangle(p1, p2, p3);
 }
 
-void Player::Update(float elapsedSec, const Rectf& gameArea)
+void Player::Update(float elapsedSec, const Rectf& gameArea, float playerSpeed)
 {
-	const float speed{ 100.f };
-
 	//std::cout << m_Direction.Length() << std::endl;
 
-	m_Position += m_Direction.Normalized() * speed * elapsedSec;
+	m_Position += m_Direction.Normalized() * playerSpeed * elapsedSec;
 
 	if (m_Position.x < gameArea.left)
 	{
