@@ -60,7 +60,7 @@ void Game::Update( float elapsedSec )
 		m_pPlayer->ApplyForce(pHamburger->GetForce(m_pPlayer->GetPosition()));
 	}
 	
-	m_pPlayer->Update(elapsedSec, m_GameArea, ScaleToDifficulty(100.f, 150.f));
+	m_pPlayer->Update(elapsedSec, m_GameArea, ScaleToDifficulty(100.f, 200.f));
 
 	if (CheckConsumeItems(m_pHamburgers))
 	{
@@ -68,7 +68,7 @@ void Game::Update( float elapsedSec )
 	}
 	if (CheckConsumeItems(m_pSalads)) 
 	{
-		m_Health += 0.1f;
+		m_Health += 0.15f;
 		if (m_Health > 1.f) m_Health = 1.f;
 	}
 
@@ -183,6 +183,7 @@ void Game::DrawUI() const
 void Game::SpawnItems()
 {
 	const int saladSpawnRadius{ 400 };
+	const float minSaladSpawnTime{ ScaleToDifficulty(1.5f, 0.5f) };
 	if (m_SaladSpawnTimer <= 0.f && m_pSalads.size() < 5)
 	{
 		Point2f pos{};
@@ -191,11 +192,11 @@ void Game::SpawnItems()
 		Salad* pSalad{ new Salad{pos} };
 		m_pSalads.push_back(pSalad);
 
-		m_SaladSpawnTimer = float(rand() % 30) / 10 + 0.5f;
+		m_SaladSpawnTimer = float(rand() % 30) / 10 + minSaladSpawnTime;
 	}
 
 	const int hamburgerSpawnRadius{ 500 };
-	const float minHamburgerSpawnTime{ ScaleToDifficulty(2.5f, 0.5f) };
+	const float minHamburgerSpawnTime{ ScaleToDifficulty(2.5f, 0.4f) };
 	if (m_HamburgerSpawnTimer <= 0.f)
 	{
 		Point2f pos{};
@@ -224,7 +225,7 @@ bool Game::CheckConsumeItems(std::vector<Item*>& items)
 
 void Game::DepleteHealth(float elapsedSec)
 {
-	const float healthDepletionRate{ ScaleToDifficulty(0.f, 0.05f)};
+	const float healthDepletionRate{ ScaleToDifficulty(0.f, 0.07f)};
 	m_Health -= elapsedSec * healthDepletionRate;
 	if (m_Health <= 0) m_Playing = false;
 }
@@ -232,7 +233,7 @@ void Game::DepleteHealth(float elapsedSec)
 float Game::GetDifficulty()
 {
 	//return 1.f;
-	const double difficultyTime{ 60 }; // seconds before the difficulty reaches 0.5
+	const double difficultyTime{ 70 }; // seconds before the difficulty reaches 0.5
 	const double base{pow(0.5, 1/difficultyTime)};
 	return 1.f - pow(base, m_PlayTime);
 }
