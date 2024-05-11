@@ -6,6 +6,7 @@ class Hamburger;
 class Salad;
 class Map;
 class Item;
+class Texture;
 
 class Game : public BaseGame
 {
@@ -39,20 +40,29 @@ private:
 
 	float m_Health;
 	float m_PlayTime;
-	bool m_Playing;
+	bool m_GameOver;
 
 	const Rectf m_GameArea;
+
+	Texture* m_pCountdownText;
+	int m_CountdownNr;
+	Texture* m_pScoreText;
+	Texture* m_pGameOverText;
 
 	// FUNCTIONS
 	void Initialize();
 	void Cleanup( );
 	void ClearBackground( ) const;
-
-	void DrawUI() const;
+	
+	void DrawHealthBar() const;
 	void SpawnItems();
 	bool CheckConsumeItems(std::vector<Item*>& items);
 
+	void UpdateCountdown();
 	void DepleteHealth(float elapsedSec);
+
+	Texture* GetText(const std::string& text, int size = 75);
+	void DrawCenterText(const Texture* pText, float vertOffset = 0.f) const;
 
 	float GetDifficulty();
 	float ScaleToDifficulty(float valEasy, float valHard);

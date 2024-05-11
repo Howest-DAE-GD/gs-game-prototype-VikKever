@@ -5,6 +5,9 @@
 #include "Salad.h"
 #include "Item.h"
 #include <iostream>
+#include <iomanip>
+#include <sstream>
+#include "Texture.h"
 
 Game::Game( const Window& window ) 
 	:BaseGame{ window }
@@ -14,8 +17,12 @@ Game::Game( const Window& window )
 	//, m_Points{ 0 }
 	, m_Health{ 1.f }
 	, m_GameArea{0.f, 0.f, GetViewPort().width, GetViewPort().height - 40.f}
-	, m_Playing{ true }
-	, m_PlayTime{ 0.f }
+	, m_GameOver{ false }
+	, m_PlayTime{ -3.f }
+	, m_CountdownNr{ 4 }
+	, m_pCountdownText{ nullptr }
+	, m_pScoreText{ nullptr }
+	, m_pGameOverText{ nullptr }
 {
 	Initialize();
 }
@@ -42,15 +49,29 @@ void Game::Cleanup( )
 	{
 		delete pSalad;
 	}
+
+	delete m_pCountdownText;
+	if (m_pScoreText != nullptr)
+	{
+		delete m_pScoreText;
+		delete m_pGameOverText;
+	}
 }
 
 void Game::Update( float elapsedSec )
 {
-	if (!m_Playing) return;
+	if (m_GameOver) return;
+
+	m_PlayTime += elapsedSec;
+
+	if (m_PlayTime < 0.f)
+	{
+		UpdateCountdown();
+		return;
+	}
 
 	m_HamburgerSpawnTimer -= elapsedSec;
 	m_SaladSpawnTimer -= elapsedSec;
-	m_PlayTime += elapsedSec;
 
 	SpawnItems();
 
@@ -79,7 +100,12 @@ void Game::Draw( ) const
 {
 	ClearBackground( );
 
-	if (m_Playing) m_pPlayer->Draw();
+	if (!m_GameOver) m_pPlayer->Draw();
+	else
+	{
+		DrawCenterText(m_pGameOverText, 50.f);
+		DrawCenterText(m_pScoreText, 0.f);
+	}
 
 	for (const Item* pHamburger : m_pHamburgers)
 	{
@@ -91,8 +117,9 @@ void Game::Draw( ) const
 		pSalad->Draw();
 	}
 
-	DrawUI();
-	//m_pMap->Draw();
+	DrawHealthBar();
+	
+	if (m_PlayTime < 0.f) DrawCenterText(m_pCountdownText, 50);
 }
 
 void Game::ProcessKeyDownEvent( const SDL_KeyboardEvent & e )
@@ -111,7 +138,7 @@ void Game::ProcessMouseMotionEvent( const SDL_MouseMotionEvent& e )
 
 void Game::ProcessMouseDownEvent( const SDL_MouseButtonEvent& e )
 {
-	if (!m_Playing) return;
+	if (m_GameOver || m_PlayTime < 0.f) return;
 
 	if (e.button == SDL_BUTTON_LEFT)
 	{
@@ -158,7 +185,7 @@ void Game::ClearBackground( ) const
 	glClear( GL_COLOR_BUFFER_BIT );
 }
 
-void Game::DrawUI() const
+void Game::DrawHealthBar() const
 {
 	const Rectf UIRect{ 0.f, m_GameArea.height, m_GameArea.width, GetViewPort().height - m_GameArea.height };
 
@@ -174,7 +201,7 @@ void Game::DrawUI() const
 	Rectf healthBarFill{ healthBarRect };
 	healthBarFill.width = healthBarRect.width * m_Health;
 
-	utils::SetColor(Color4f{ 1.f, 0.f, 0.f, 1.f });
+	utils::SetColor(Color4f{ 0.f, 0.7f, 0.f, 1.f });
 	utils::FillRect(healthBarFill);
 
 	utils::DrawRect(healthBarRect, 1.f);
@@ -196,7 +223,7 @@ void Game::SpawnItems()
 	}
 
 	const int hamburgerSpawnRadius{ 500 };
-	const float minHamburgerSpawnTime{ ScaleToDifficulty(2.5f, 0.4f) };
+	const float minHamburgerSpawnTime{ ScaleToDifficulty(3.5f, 0.4f) };
 	if (m_HamburgerSpawnTimer <= 0.f)
 	{
 		Point2f pos{};
@@ -223,19 +250,50 @@ bool Game::CheckConsumeItems(std::vector<Item*>& items)
 	return false;
 }
 
+void Game::UpdateCountdown()
+{
+	if (-floor(m_PlayTime) < m_CountdownNr)
+	{
+		--m_CountdownNr;
+		if (m_pCountdownText != nullptr) delete m_pCountdownText;
+		m_pCountdownText = GetText(std::to_string(m_CountdownNr));
+	}
+}
+
 void Game::DepleteHealth(float elapsedSec)
 {
 	const float healthDepletionRate{ ScaleToDifficulty(0.f, 0.07f)};
 	m_Health -= elapsedSec * healthDepletionRate;
-	if (m_Health <= 0) m_Playing = false;
+	if (m_Health <= 0)
+	{
+		m_GameOver = true;
+		std::ostringstream scoreText;
+		scoreText << "You stayed healthy for " << std::fixed << std::setprecision(1) << m_PlayTime << "s.";
+		m_pScoreText = GetText(scoreText.str(), 30);
+		m_pGameOverText = GetText("GAME OVER");
+	}
+}
+
+Texture* Game::GetText(const std::string& text, int size)
+{
+	return new Texture{ text, "Bond Story.ttf", size, Color4f{1.f, 1.f, 1.f, 1.f} };
+}
+
+void Game::DrawCenterText(const Texture* pText, float vertOffset) const
+{
+	const Point2f drawPos{
+		m_GameArea.width / 2 - pText->GetWidth() / 2,
+		m_GameArea.height / 2 - pText->GetHeight() / 2 + vertOffset
+	};
+	pText->Draw(drawPos);
 }
 
 float Game::GetDifficulty()
 {
 	//return 1.f;
-	const double difficultyTime{ 70 }; // seconds before the difficulty reaches 0.5
+	const double difficultyTime{ 90 }; // seconds before the difficulty reaches 0.5
 	const double base{pow(0.5, 1/difficultyTime)};
-	return 1.f - pow(base, m_PlayTime);
+	return float(1.0 - pow(base, m_PlayTime));
 }
 
 float Game::ScaleToDifficulty(float valEasy, float valHard)
