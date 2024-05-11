@@ -6,6 +6,7 @@ Player::Player(const Point2f& pos)
 	:m_Position{pos}
 	, m_Angle{0.f}
 	, m_Direction{0, 0}
+	, m_StunnedTimer{0.f}
 {
 }
 
@@ -13,7 +14,8 @@ void Player::Draw() const
 {
 	const float size{ 15.f };
 	const float arrowAngle{ 3 * M_PI / 4 };
-	utils::SetColor(Color4f{ 1.f, 0.5f, 0.f, 1.f });
+	if (IsStunned()) utils::SetColor(Color4f{ 1.f, 0.f, 0.f, 1.f });
+	else utils::SetColor(Color4f{ 1.f, 0.5f, 0.f, 1.f });
 	const Point2f p1{ m_Position.x + cosf(m_Angle) * size, m_Position.y + sinf(m_Angle) * size};
 	const Point2f p2{ m_Position.x + cosf(m_Angle + arrowAngle) * size, m_Position.y + sinf(m_Angle + arrowAngle) * size};
 	const Point2f p3{ m_Position.x + cosf(m_Angle - arrowAngle) * size, m_Position.y + sinf(m_Angle - arrowAngle) * size};
@@ -22,6 +24,12 @@ void Player::Draw() const
 
 void Player::Update(float elapsedSec, const Rectf& gameArea, float playerSpeed)
 {
+	if (IsStunned())
+	{
+		m_StunnedTimer -= elapsedSec;
+		//return;
+		playerSpeed *= 0.1f;
+	}
 	//std::cout << m_Direction.Length() << std::endl;
 
 	m_Position += m_Direction.Normalized() * playerSpeed * elapsedSec;
@@ -54,6 +62,16 @@ void Player::Update(float elapsedSec, const Rectf& gameArea, float playerSpeed)
 void Player::ApplyForce(const Vector2f& force)
 {
 	m_Direction += force;
+}
+
+void Player::Stun()
+{
+	m_StunnedTimer = 0.3f;
+}
+
+bool Player::IsStunned() const
+{
+	return m_StunnedTimer > 0.f;
 }
 
 Point2f Player::GetPosition() const

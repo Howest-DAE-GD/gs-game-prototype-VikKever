@@ -34,6 +34,7 @@ Game::~Game( )
 
 void Game::Initialize( )
 {
+	SpawnItems();
 }
 
 void Game::Cleanup( )
@@ -86,6 +87,7 @@ void Game::Update( float elapsedSec )
 	if (CheckConsumeItems(m_pHamburgers))
 	{
 		m_Health -= 0.1f;
+		m_pPlayer->Stun();
 	}
 	if (CheckConsumeItems(m_pSalads)) 
 	{
@@ -93,19 +95,12 @@ void Game::Update( float elapsedSec )
 		if (m_Health > 1.f) m_Health = 1.f;
 	}
 
-	DepleteHealth(elapsedSec);
+	if (!m_pPlayer->IsStunned()) DepleteHealth(elapsedSec);
 }
 
 void Game::Draw( ) const
 {
 	ClearBackground( );
-
-	if (!m_GameOver) m_pPlayer->Draw();
-	else
-	{
-		DrawCenterText(m_pGameOverText, 50.f);
-		DrawCenterText(m_pScoreText, 0.f);
-	}
 
 	for (const Item* pHamburger : m_pHamburgers)
 	{
@@ -120,6 +115,13 @@ void Game::Draw( ) const
 	DrawHealthBar();
 	
 	if (m_PlayTime < 0.f) DrawCenterText(m_pCountdownText, 50);
+
+	if (!m_GameOver) m_pPlayer->Draw();
+	else
+	{
+		DrawCenterText(m_pGameOverText, 50.f);
+		DrawCenterText(m_pScoreText, 0.f);
+	}
 }
 
 void Game::ProcessKeyDownEvent( const SDL_KeyboardEvent & e )
@@ -201,9 +203,11 @@ void Game::DrawHealthBar() const
 	Rectf healthBarFill{ healthBarRect };
 	healthBarFill.width = healthBarRect.width * m_Health;
 
-	utils::SetColor(Color4f{ 0.f, 0.7f, 0.f, 1.f });
+	if (m_pPlayer->IsStunned()) utils::SetColor(Color4f{ 0.7f, 0.f, 0.f, 1.f });
+	else utils::SetColor(Color4f{ 0.f, 0.7f, 0.f, 1.f });
 	utils::FillRect(healthBarFill);
 
+	utils::SetColor(Color4f{ 0.f, 0.7f, 0.f, 1.f });
 	utils::DrawRect(healthBarRect, 1.f);
 }
 
