@@ -143,7 +143,7 @@ void Game::ProcessMouseMotionEvent( const SDL_MouseMotionEvent& e )
 
 	for (int idx{}; idx < m_pHamburgers.size(); ++idx)
 	{
-		if (utils::IsPointInCircle(m_MousePos, m_pHamburgers[idx]->GetHitbox()) && !m_GameOver && m_PlayTime > 0.f)
+		if (utils::IsPointInCircle(m_MousePos, m_pHamburgers[idx]->GetClickArea()) && !m_GameOver && m_PlayTime > 0.f)
 		{
 			m_DrawHamburgerTemp = false;
 			static_cast<Hamburger*>(m_pHamburgers[idx])->SetHighlighted(true);
@@ -151,7 +151,11 @@ void Game::ProcessMouseMotionEvent( const SDL_MouseMotionEvent& e )
 		}
 		else static_cast<Hamburger*>(m_pHamburgers[idx])->SetHighlighted(false);
 	}
-	if (m_PlayTime > 0.f && !m_GameOver) m_DrawHamburgerTemp = true;
+	if (m_PlayTime > 0.f && !m_GameOver && !utils::IsPointInCircle(m_MousePos, Circlef{ m_pPlayer->GetPosition(), 45.f }))
+	{
+		m_DrawHamburgerTemp = true;
+	}
+	else m_DrawHamburgerTemp = false;
 }
 
 void Game::ProcessMouseDownEvent( const SDL_MouseButtonEvent& e )
@@ -165,7 +169,7 @@ void Game::ProcessMouseDownEvent( const SDL_MouseButtonEvent& e )
 
 		for (int idx{}; idx < m_pHamburgers.size(); ++idx)
 		{
-			if (utils::IsPointInCircle(mousePos, m_pHamburgers[idx]->GetHitbox()))
+			if (utils::IsPointInCircle(mousePos, m_pHamburgers[idx]->GetClickArea()))
 			{
 				delete m_pHamburgers[idx];
 				m_pHamburgers.erase(m_pHamburgers.begin() + idx);
@@ -173,7 +177,7 @@ void Game::ProcessMouseDownEvent( const SDL_MouseButtonEvent& e )
 			}
 		}
 
-		if (!utils::IsPointInCircle(mousePos, m_pPlayer->GetHitbox()))
+		if (!utils::IsPointInCircle(mousePos, Circlef{m_pPlayer->GetPosition(), 50.f}))
 		{
 			m_pHamburgers.push_back(new Hamburger{ mousePos });
 			m_DrawHamburgerTemp = false;
@@ -225,6 +229,8 @@ void Game::Reset()
 		delete pSalad;
 	}
 	m_pSalads.clear();
+
+	SpawnItems();
 }
 
 void Game::DrawHealthBar() const

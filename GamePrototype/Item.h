@@ -7,6 +7,7 @@ public:
 
 	virtual void Draw() const = 0;
 	Circlef GetHitbox() const;
+	Circlef GetClickArea() const;
 protected:
 	Point2f m_Position;
 };
