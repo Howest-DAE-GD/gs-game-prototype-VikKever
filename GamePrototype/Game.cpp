@@ -131,8 +131,6 @@ void Game::Draw( ) const
 void Game::ProcessKeyDownEvent( const SDL_KeyboardEvent & e )
 {
 	if (m_GameOver && e.keysym.sym == SDLK_r) Reset();
-
-	std::cout << "Difficulty: " << GetDifficulty() << std::endl;
 }
 
 void Game::ProcessKeyUpEvent( const SDL_KeyboardEvent& e )
@@ -278,15 +276,12 @@ void Game::SpawnItems()
 		{
 			pos.x = float(rand() % hamburgerSpawnRadius + m_GameArea.width / 2 - hamburgerSpawnRadius / 2);
 			pos.y = float(rand() % hamburgerSpawnRadius + m_GameArea.height / 2 - hamburgerSpawnRadius / 2);
-			std::cout << "I";
 		} while (utils::GetDistance(pos, m_pPlayer->GetPosition()) < safeRadius);
 
 		Hamburger* pHamburger{ new Hamburger{pos} };
 		m_pHamburgers.push_back(pHamburger);
 
 		m_HamburgerSpawnTimer = float(rand() % 20) / 10 + minHamburgerSpawnTime;
-
-		std::cout << std::endl;
 	}
 }
 
