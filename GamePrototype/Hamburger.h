@@ -9,5 +9,10 @@ public:
 
 	void Draw() const override;
 	Vector2f GetForce(const Point2f& pos) const;
+	void SetHighlighted(bool setHightlighted);
+
+	static void Draw(const Point2f& pos, float opacity = 1.f);
+private:
+	bool m_Highlighted;
 };
 

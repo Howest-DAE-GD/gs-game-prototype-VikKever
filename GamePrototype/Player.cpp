@@ -79,6 +79,11 @@ Point2f Player::GetPosition() const
 	return m_Position;
 }
 
+void Player::SetPosition(const Point2f& pos)
+{
+	m_Position = pos;
+}
+
 Circlef Player::GetHitbox() const
 {
 	return Circlef{ m_Position, 10.f };

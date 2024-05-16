@@ -23,6 +23,8 @@ Game::Game( const Window& window )
 	, m_pCountdownText{ nullptr }
 	, m_pScoreText{ nullptr }
 	, m_pGameOverText{ nullptr }
+	, m_MousePos{}
+	, m_DrawHamburgerTemp{false}
 {
 	Initialize();
 }
@@ -102,6 +104,8 @@ void Game::Draw( ) const
 {
 	ClearBackground( );
 
+	if (m_DrawHamburgerTemp) Hamburger::Draw(m_MousePos, 0.3f);
+
 	for (const Item* pHamburger : m_pHamburgers)
 	{
 		pHamburger->Draw();
@@ -126,6 +130,8 @@ void Game::Draw( ) const
 
 void Game::ProcessKeyDownEvent( const SDL_KeyboardEvent & e )
 {
+	if (m_GameOver && e.keysym.sym == SDLK_r) Reset();
+
 	std::cout << "Difficulty: " << GetDifficulty() << std::endl;
 }
 
@@ -135,7 +141,19 @@ void Game::ProcessKeyUpEvent( const SDL_KeyboardEvent& e )
 
 void Game::ProcessMouseMotionEvent( const SDL_MouseMotionEvent& e )
 {
-	//std::cout << "MOUSEMOTION event: " << e.x << ", " << e.y << std::endl;
+	m_MousePos = Point2f{ float(e.x), float(e.y) };
+
+	for (int idx{}; idx < m_pHamburgers.size(); ++idx)
+	{
+		if (utils::IsPointInCircle(m_MousePos, m_pHamburgers[idx]->GetHitbox()) && !m_GameOver && m_PlayTime > 0.f)
+		{
+			m_DrawHamburgerTemp = false;
+			static_cast<Hamburger*>(m_pHamburgers[idx])->SetHighlighted(true);
+			return;
+		}
+		else static_cast<Hamburger*>(m_pHamburgers[idx])->SetHighlighted(false);
+	}
+	if (m_PlayTime > 0.f && !m_GameOver) m_DrawHamburgerTemp = true;
 }
 
 void Game::ProcessMouseDownEvent( const SDL_MouseButtonEvent& e )
@@ -160,6 +178,7 @@ void Game::ProcessMouseDownEvent( const SDL_MouseButtonEvent& e )
 		if (!utils::IsPointInCircle(mousePos, m_pPlayer->GetHitbox()))
 		{
 			m_pHamburgers.push_back(new Hamburger{ mousePos });
+			m_DrawHamburgerTemp = false;
 		}
 	}
 }
@@ -185,6 +204,29 @@ void Game::ClearBackground( ) const
 {
 	glClearColor( 0.f, 0.f, 0.f, 1.0f );
 	glClear( GL_COLOR_BUFFER_BIT );
+}
+
+void Game::Reset()
+{
+	m_GameOver = false;
+	m_PlayTime = -3.f;
+	m_CountdownNr = 4;
+	m_Health = 1.f;
+	m_SaladSpawnTimer = 0.f;
+	m_HamburgerSpawnTimer = 0.f;
+	m_pPlayer->SetPosition(Point2f{ m_GameArea.width / 2, m_GameArea.height / 2 });
+
+	for (const Item* pHamburger : m_pHamburgers)
+	{
+		delete pHamburger;
+	}
+	m_pHamburgers.clear();
+
+	for (const Item* pSalad : m_pSalads)
+	{
+		delete pSalad;
+	}
+	m_pSalads.clear();
 }
 
 void Game::DrawHealthBar() const
@@ -214,7 +256,7 @@ void Game::DrawHealthBar() const
 void Game::SpawnItems()
 {
 	const int saladSpawnRadius{ 400 };
-	const float minSaladSpawnTime{ ScaleToDifficulty(1.5f, 0.5f) };
+	const float minSaladSpawnTime{ ScaleToDifficulty(4.f, 0.5f) };
 	if (m_SaladSpawnTimer <= 0.f && m_pSalads.size() < 5)
 	{
 		Point2f pos{};
@@ -227,16 +269,24 @@ void Game::SpawnItems()
 	}
 
 	const int hamburgerSpawnRadius{ 500 };
+	const float safeRadius{ 110.f };
 	const float minHamburgerSpawnTime{ ScaleToDifficulty(3.5f, 0.4f) };
 	if (m_HamburgerSpawnTimer <= 0.f)
 	{
 		Point2f pos{};
-		pos.x = float(rand() % hamburgerSpawnRadius + m_GameArea.width / 2 - hamburgerSpawnRadius / 2);
-		pos.y = float(rand() % hamburgerSpawnRadius + m_GameArea.height / 2 - hamburgerSpawnRadius / 2);
+		do
+		{
+			pos.x = float(rand() % hamburgerSpawnRadius + m_GameArea.width / 2 - hamburgerSpawnRadius / 2);
+			pos.y = float(rand() % hamburgerSpawnRadius + m_GameArea.height / 2 - hamburgerSpawnRadius / 2);
+			std::cout << "I";
+		} while (utils::GetDistance(pos, m_pPlayer->GetPosition()) < safeRadius);
+
 		Hamburger* pHamburger{ new Hamburger{pos} };
 		m_pHamburgers.push_back(pHamburger);
 
 		m_HamburgerSpawnTimer = float(rand() % 20) / 10 + minHamburgerSpawnTime;
+
+		std::cout << std::endl;
 	}
 }
 
@@ -294,7 +344,6 @@ void Game::DrawCenterText(const Texture* pText, float vertOffset) const
 
 float Game::GetDifficulty()
 {
-	//return 1.f;
 	const double difficultyTime{ 90 }; // seconds before the difficulty reaches 0.5
 	const double base{pow(0.5, 1/difficultyTime)};
 	return float(1.0 - pow(base, m_PlayTime));

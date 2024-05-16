@@ -49,11 +49,16 @@ private:
 	Texture* m_pScoreText;
 	Texture* m_pGameOverText;
 
+	Point2f m_MousePos;
+	bool m_DrawHamburgerTemp;
+
 	// FUNCTIONS
 	void Initialize();
 	void Cleanup( );
 	void ClearBackground( ) const;
 	
+	void Reset();
+
 	void DrawHealthBar() const;
 	void SpawnItems();
 	bool CheckConsumeItems(std::vector<Item*>& items);

@@ -12,6 +12,7 @@ public:
 	void Stun();
 	bool IsStunned() const;
 	Point2f GetPosition() const;
+	void SetPosition(const Point2f& pos);
 	Circlef GetHitbox() const;
 private:
 	Point2f m_Position;
