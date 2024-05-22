@@ -7,6 +7,7 @@ Player::Player(const Point2f& pos)
 	, m_Angle{0.f}
 	, m_Direction{0, 0}
 	, m_StunnedTimer{0.f}
+	, m_SpeedPercentage{ 1.f }
 {
 }
 
@@ -32,7 +33,7 @@ void Player::Update(float elapsedSec, const Rectf& gameArea, float playerSpeed)
 	}
 	//std::cout << m_Direction.Length() << std::endl;
 
-	m_Position += m_Direction.Normalized() * playerSpeed * elapsedSec;
+	m_Position += m_Direction.Normalized() * playerSpeed * elapsedSec * m_SpeedPercentage;
 
 	if (m_Position.x < gameArea.left)
 	{
@@ -57,11 +58,15 @@ void Player::Update(float elapsedSec, const Rectf& gameArea, float playerSpeed)
 
 	m_Angle = atan2f(m_Direction.y, m_Direction.x);
 	m_Direction = m_Direction * pow(0.1, elapsedSec);
+
+	m_SpeedPercentage -= 0.5f * elapsedSec;
+	if (m_SpeedPercentage < 0.f) m_SpeedPercentage = 0.f;
 }
 
 void Player::ApplyForce(const Vector2f& force)
 {
 	m_Direction += force;
+	m_SpeedPercentage = 1.f;
 }
 
 void Player::Stun()

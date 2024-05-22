@@ -20,5 +20,7 @@ private:
 	float m_Angle;
 
 	float m_StunnedTimer;
+
+	float m_SpeedPercentage;
 };
 

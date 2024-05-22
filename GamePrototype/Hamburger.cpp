@@ -28,9 +28,9 @@ void Hamburger::SetHighlighted(bool setHightlighted)
 
 void Hamburger::Draw(const Point2f& pos, float opacity)
 {
-	const float size{ 20.f };
-	const float openingSize{ 5.f };
-	const float burgerSize{ 15.f };
+	const float size{ 30.f };
+	const float openingSize{ 8.f };
+	const float burgerSize{ 23.f };
 
 	utils::SetColor(Color4f{ 1.f, 0.f, 0.f, opacity });
 	utils::FillRect(pos.x - burgerSize / 2, pos.y - openingSize / 2, burgerSize, openingSize);

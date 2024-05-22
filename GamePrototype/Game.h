@@ -31,12 +31,13 @@ public:
 
 private:
 	Player* m_pPlayer;
-	Player* m_pPlayer2;
 	std::vector<Item*> m_pHamburgers;
 	std::vector<Item*> m_pSalads;
+	std::vector<Item*> m_pSpikes;
 
 	float m_HamburgerSpawnTimer;
 	float m_SaladSpawnTimer;
+	float m_SpikeSpawnTimer;
 
 	float m_Health;
 	float m_PlayTime;

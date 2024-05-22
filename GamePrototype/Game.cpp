@@ -4,6 +4,7 @@
 #include "Hamburger.h"
 #include "Salad.h"
 #include "Item.h"
+#include "Spike.h"
 #include <iostream>
 #include <iomanip>
 #include <sstream>
@@ -25,6 +26,7 @@ Game::Game( const Window& window )
 	, m_pGameOverText{ nullptr }
 	, m_MousePos{}
 	, m_DrawHamburgerTemp{false}
+	, m_SpikeSpawnTimer{20.f}
 {
 	Initialize();
 }
@@ -53,6 +55,11 @@ void Game::Cleanup( )
 		delete pSalad;
 	}
 
+	for (const Item* pSpike : m_pSpikes)
+	{
+		delete pSpike;
+	}
+
 	delete m_pCountdownText;
 	if (m_pScoreText != nullptr)
 	{
@@ -75,6 +82,7 @@ void Game::Update( float elapsedSec )
 
 	m_HamburgerSpawnTimer -= elapsedSec;
 	m_SaladSpawnTimer -= elapsedSec;
+	m_SpikeSpawnTimer -= elapsedSec;
 
 	SpawnItems();
 
@@ -82,6 +90,17 @@ void Game::Update( float elapsedSec )
 	{
 		const Hamburger* pHamburger{ static_cast<const Hamburger*>(pItem) };
 		m_pPlayer->ApplyForce(pHamburger->GetForce(m_pPlayer->GetPosition()));
+	}
+
+	for (int idx{}; idx < m_pSpikes.size(); ++idx)
+	{
+		Spike* pSpike{ static_cast<Spike*>(m_pSpikes[idx])};
+		pSpike->UpdateTimer(elapsedSec);
+		if (pSpike->ShouldDespawn())
+		{
+			delete m_pSpikes[idx];
+			m_pSpikes.erase(m_pSpikes.begin() + idx);
+		}
 	}
 	
 	m_pPlayer->Update(elapsedSec, m_GameArea, ScaleToDifficulty(100.f, 200.f));
@@ -95,6 +114,11 @@ void Game::Update( float elapsedSec )
 	{
 		m_Health += 0.15f;
 		if (m_Health > 1.f) m_Health = 1.f;
+	}
+	if (CheckConsumeItems(m_pSpikes))
+	{
+		m_Health -= 0.1f;
+		m_pPlayer->Stun();
 	}
 
 	if (!m_pPlayer->IsStunned()) DepleteHealth(elapsedSec);
@@ -114,6 +138,11 @@ void Game::Draw( ) const
 	for (const Item* pSalad : m_pSalads)
 	{
 		pSalad->Draw();
+	}
+
+	for (const Item* pSpike : m_pSpikes)
+	{
+		pSpike->Draw();
 	}
 
 	DrawHealthBar();
@@ -151,7 +180,7 @@ void Game::ProcessMouseMotionEvent( const SDL_MouseMotionEvent& e )
 		}
 		else static_cast<Hamburger*>(m_pHamburgers[idx])->SetHighlighted(false);
 	}
-	if (m_PlayTime > 0.f && !m_GameOver && !utils::IsPointInCircle(m_MousePos, Circlef{ m_pPlayer->GetPosition(), 45.f }))
+	if (m_PlayTime > 0.f && !m_GameOver && !utils::IsPointInCircle(m_MousePos, Circlef{ m_pPlayer->GetPosition(), 50.f }))
 	{
 		m_DrawHamburgerTemp = true;
 	}
@@ -216,6 +245,7 @@ void Game::Reset()
 	m_Health = 1.f;
 	m_SaladSpawnTimer = 0.f;
 	m_HamburgerSpawnTimer = 0.f;
+	m_SpikeSpawnTimer = 20.f;
 	m_pPlayer->SetPosition(Point2f{ m_GameArea.width / 2, m_GameArea.height / 2 });
 
 	for (const Item* pHamburger : m_pHamburgers)
@@ -229,6 +259,12 @@ void Game::Reset()
 		delete pSalad;
 	}
 	m_pSalads.clear();
+
+	for (const Item* pSpike : m_pSpikes)
+	{
+		delete pSpike;
+	}
+	m_pSpikes.clear();
 
 	SpawnItems();
 }
@@ -260,7 +296,7 @@ void Game::DrawHealthBar() const
 void Game::SpawnItems()
 {
 	const int saladSpawnRadius{ 400 };
-	const float minSaladSpawnTime{ ScaleToDifficulty(4.f, 0.5f) };
+	const float minSaladSpawnTime{ ScaleToDifficulty(2.f, 1.f) };
 	if (m_SaladSpawnTimer <= 0.f && m_pSalads.size() < 5)
 	{
 		Point2f pos{};
@@ -273,8 +309,8 @@ void Game::SpawnItems()
 	}
 
 	const int hamburgerSpawnRadius{ 500 };
-	const float safeRadius{ 110.f };
-	const float minHamburgerSpawnTime{ ScaleToDifficulty(3.5f, 0.4f) };
+	const float safeRadius{ 150.f };
+	const float minHamburgerSpawnTime{ ScaleToDifficulty(2.5f, 1.f) };
 	if (m_HamburgerSpawnTimer <= 0.f)
 	{
 		Point2f pos{};
@@ -288,6 +324,23 @@ void Game::SpawnItems()
 		m_pHamburgers.push_back(pHamburger);
 
 		m_HamburgerSpawnTimer = float(rand() % 20) / 10 + minHamburgerSpawnTime;
+	}
+
+	const int spikeSpawnRadius{ 400 };
+	const float minSpikeSpawnTime{ ScaleToDifficulty(5.f, 1.f) };
+	if (m_SpikeSpawnTimer <= 0.f)
+	{
+		Point2f pos{};
+		do
+		{
+			pos.x = float(rand() % spikeSpawnRadius + m_GameArea.width / 2 - spikeSpawnRadius / 2);
+			pos.y = float(rand() % spikeSpawnRadius + m_GameArea.height / 2 - spikeSpawnRadius / 2);
+		} while (utils::GetDistance(pos, m_pPlayer->GetPosition()) < safeRadius);
+
+		Spike* pSpike{ new Spike{pos} };
+		m_pSpikes.push_back(pSpike);
+
+		m_SpikeSpawnTimer = float(rand() % 20) / 10 + minSpikeSpawnTime;
 	}
 }
 
@@ -317,7 +370,7 @@ void Game::UpdateCountdown()
 
 void Game::DepleteHealth(float elapsedSec)
 {
-	const float healthDepletionRate{ ScaleToDifficulty(0.f, 0.07f)};
+	const float healthDepletionRate{ ScaleToDifficulty(0.f, 0.05f)};
 	m_Health -= elapsedSec * healthDepletionRate;
 	if (m_Health <= 0)
 	{
@@ -345,7 +398,8 @@ void Game::DrawCenterText(const Texture* pText, float vertOffset) const
 
 float Game::GetDifficulty()
 {
-	const double difficultyTime{ 90 }; // seconds before the difficulty reaches 0.5
+	return 1.f;
+	const double difficultyTime{ 60 }; // seconds before the difficulty reaches 0.5
 	const double base{pow(0.5, 1/difficultyTime)};
 	return float(1.0 - pow(base, m_PlayTime));
 }
