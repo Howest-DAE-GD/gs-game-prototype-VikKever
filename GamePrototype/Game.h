@@ -49,6 +49,7 @@ private:
 	int m_CountdownNr;
 	Texture* m_pScoreText;
 	Texture* m_pGameOverText;
+	Texture* m_pResetText;
 
 	Point2f m_MousePos;
 	bool m_DrawHamburgerTemp;

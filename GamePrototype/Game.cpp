@@ -44,6 +44,8 @@ Game::~Game( )
 
 void Game::Initialize( )
 {
+	m_pGameOverText = GetText("GAME OVER");
+	m_pResetText = GetText("Press 'r' to restart", 20);
 	SpawnItems();
 }
 
@@ -67,10 +69,11 @@ void Game::Cleanup( )
 	}
 
 	delete m_pCountdownText;
+	delete m_pGameOverText;
+	delete m_pResetText;
 	if (m_pScoreText != nullptr)
 	{
 		delete m_pScoreText;
-		delete m_pGameOverText;
 	}
 }
 
@@ -160,6 +163,7 @@ void Game::Draw( ) const
 	{
 		DrawCenterText(m_pGameOverText, 50.f);
 		DrawCenterText(m_pScoreText, 0.f);
+		DrawCenterText(m_pResetText, -35.f);
 	}
 }
 
@@ -381,13 +385,10 @@ void Game::DepleteHealth(float elapsedSec)
 	if (m_Health <= 0)
 	{
 		m_GameOver = true;
+		if (m_pScoreText != nullptr) delete m_pScoreText;
 		std::ostringstream scoreText;
 		scoreText << "You stayed healthy for " << std::fixed << std::setprecision(1) << m_PlayTime << "s.";
 		m_pScoreText = GetText(scoreText.str(), 30);
-		m_pGameOverText = GetText("GAME OVER");
-
-		std::cout << "\nYou died!\n";
-		std::cout << "Press 'r' to reset\n";
 	}
 }
 
