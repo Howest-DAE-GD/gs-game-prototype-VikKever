@@ -44,6 +44,7 @@ Game::~Game( )
 
 void Game::Initialize( )
 {
+	m_pControlsText = GetText("Use the mouse to place and remove hamburgers.", 20);
 	m_pGameOverText = GetText("GAME OVER");
 	m_pResetText = GetText("Press 'r' to restart", 20);
 	SpawnItems();
@@ -69,6 +70,7 @@ void Game::Cleanup( )
 	}
 
 	delete m_pCountdownText;
+	delete m_pControlsText;
 	delete m_pGameOverText;
 	delete m_pResetText;
 	if (m_pScoreText != nullptr)
@@ -156,7 +158,11 @@ void Game::Draw( ) const
 
 	DrawHealthBar();
 	
-	if (m_PlayTime < 0.f) DrawCenterText(m_pCountdownText, 50);
+	if (m_PlayTime < 0.f) 
+	{
+		DrawCenterText(m_pCountdownText, 60.f);
+		DrawCenterText(m_pControlsText, -230.f);
+	}
 
 	if (!m_GameOver) m_pPlayer->Draw();
 	else

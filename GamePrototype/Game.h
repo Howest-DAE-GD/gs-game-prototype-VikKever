@@ -47,6 +47,7 @@ private:
 
 	Texture* m_pCountdownText;
 	int m_CountdownNr;
+	Texture* m_pControlsText;
 	Texture* m_pScoreText;
 	Texture* m_pGameOverText;
 	Texture* m_pResetText;
