@@ -57,7 +57,7 @@ void Player::Update(float elapsedSec, const Rectf& gameArea, float playerSpeed)
 	}
 
 	m_Angle = atan2f(m_Direction.y, m_Direction.x);
-	m_Direction = m_Direction * pow(0.1, elapsedSec);
+	m_Direction = m_Direction * pow(0.05, elapsedSec);
 
 	m_SpeedPercentage -= 0.5f * elapsedSec;
 	if (m_SpeedPercentage < 0.f) m_SpeedPercentage = 0.f;

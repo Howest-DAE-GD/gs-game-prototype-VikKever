@@ -29,6 +29,12 @@ Game::Game( const Window& window )
 	, m_SpikeSpawnTimer{20.f}
 {
 	Initialize();
+
+	std::cout << "Healty Live\n";
+	std::cout << "Use the mouse to place and remove hamburgers.\n";
+	std::cout << "The player is addicted to fastfood and will try to eat the burgers.\n";
+	std::cout << "It is your goal to let them eat the salad instead and to make them stay healthy for as long as possible.\n";
+	std::cout << "Watch out for spikes too!\n";
 }
 
 Game::~Game( )
@@ -107,7 +113,7 @@ void Game::Update( float elapsedSec )
 
 	if (CheckConsumeItems(m_pHamburgers))
 	{
-		m_Health -= 0.1f;
+		m_Health -= 0.07f;
 		m_pPlayer->Stun();
 	}
 	if (CheckConsumeItems(m_pSalads)) 
@@ -117,7 +123,7 @@ void Game::Update( float elapsedSec )
 	}
 	if (CheckConsumeItems(m_pSpikes))
 	{
-		m_Health -= 0.1f;
+		m_Health -= 0.15f;
 		m_pPlayer->Stun();
 	}
 
@@ -327,7 +333,7 @@ void Game::SpawnItems()
 	}
 
 	const int spikeSpawnRadius{ 400 };
-	const float minSpikeSpawnTime{ ScaleToDifficulty(5.f, 1.f) };
+	const float minSpikeSpawnTime{ ScaleToDifficulty(10.f, 1.f) };
 	if (m_SpikeSpawnTimer <= 0.f)
 	{
 		Point2f pos{};
@@ -379,6 +385,9 @@ void Game::DepleteHealth(float elapsedSec)
 		scoreText << "You stayed healthy for " << std::fixed << std::setprecision(1) << m_PlayTime << "s.";
 		m_pScoreText = GetText(scoreText.str(), 30);
 		m_pGameOverText = GetText("GAME OVER");
+
+		std::cout << "\nYou died!\n";
+		std::cout << "Press 'r' to reset\n";
 	}
 }
 
@@ -398,7 +407,7 @@ void Game::DrawCenterText(const Texture* pText, float vertOffset) const
 
 float Game::GetDifficulty()
 {
-	return 1.f;
+	//return 0.9f;
 	const double difficultyTime{ 60 }; // seconds before the difficulty reaches 0.5
 	const double base{pow(0.5, 1/difficultyTime)};
 	return float(1.0 - pow(base, m_PlayTime));
