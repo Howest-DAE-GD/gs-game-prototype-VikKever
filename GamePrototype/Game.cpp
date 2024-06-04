@@ -30,11 +30,11 @@ Game::Game( const Window& window )
 {
 	Initialize();
 
-	std::cout << "Healty Live\n";
-	std::cout << "Use the mouse to place and remove hamburgers.\n";
-	std::cout << "The player is addicted to fastfood and will try to eat the burgers.\n";
-	std::cout << "It is your goal to let them eat the salad instead and to make them stay healthy for as long as possible.\n";
-	std::cout << "Watch out for spikes too!\n";
+	//std::cout << "Healty Live\n";
+	//std::cout << "Use the mouse to place and remove hamburgers.\n";
+	//std::cout << "The player is addicted to fastfood and will try to eat the burgers.\n";
+	//std::cout << "It is your goal to let them eat the salad instead and to make them stay healthy for as long as possible.\n";
+	//std::cout << "Watch out for spikes too!\n";
 }
 
 Game::~Game( )
